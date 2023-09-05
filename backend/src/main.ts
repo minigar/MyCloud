@@ -1,12 +1,14 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import path from 'path';
+import helmet from 'helmet';
+import * as express from 'express';
 import * as bodyParser from 'body-parser';
 import * as cookieParser from 'cookie-parser';
 
-import helmet from 'helmet';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-
+import { AppModule } from './app.module';
 import { BusinessErrorFilter } from './common/errors/businessErrors/businessError';
 
 const APP_PORT = process.env.APP_PORT;
@@ -14,12 +16,11 @@ const NEXT_APP_HOST = process.env.NEXT_APP_HOST;
 const NEXT_APP_PORT = process.env.NEXT_APP_PORT;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { cors: false });
+  const app = await NestFactory.create(AppModule, {});
 
-  app.enableCors({
-    credentials: true,
-    origin: `http://${NEXT_APP_HOST}:${NEXT_APP_PORT}`,
-  });
+  app.enableCors({ credentials: true, origin: true });
+
+  app.use('/public', express.static(path.join('./uploads')));
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(cookieParser());
@@ -37,12 +38,17 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('swagger')
+    .addBearerAuth()
     .setVersion('1.0')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
 
-  SwaggerModule.setup('swagger', app, document);
+  SwaggerModule.setup('swagger', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
 
   await app.listen(APP_PORT);
   Logger.log(`Server has been started at ${APP_PORT} port!`);

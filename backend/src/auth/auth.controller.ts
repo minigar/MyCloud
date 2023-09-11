@@ -13,9 +13,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
 import { CurrentUser } from 'src/common/decorators';
 import { OAuthUser, Tokens } from './types';
-import { GoogleGuard, RefreshTokenGuard } from 'src/common/guards';
-import { UserBodyModel } from 'src/models/User.dto';
-import { ApiBody } from '@nestjs/swagger';
+import { AccessTokenGuard, GoogleGuard } from 'src/common/guards';
+import { UserBodyModel, UserDecoded } from 'src/models/User.dto';
+import { ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 
 @Controller('auth')
 export class AuthController {
@@ -65,18 +65,30 @@ export class AuthController {
   }
 
   @Post('logout')
+  @ApiBearerAuth()
+  @UseGuards(AccessTokenGuard)
   @HttpCode(HttpStatus.OK)
-  async logout(@CurrentUser() { userId }) {
-    return await this.authService.logout(userId);
+  async logout(@CurrentUser() user: UserDecoded) {
+    console.log(user);
+    return await this.authService.logout(user.userId);
   }
 
-  @UseGuards(RefreshTokenGuard)
   @Post('refresh')
+  @ApiBearerAuth()
+  @UseGuards(AccessTokenGuard)
   @HttpCode(HttpStatus.OK)
-  async localRefresh(
+  @ApiBody({
+    schema: {
+      example: 'refreshToken',
+      properties: {
+        refreshToken: { type: 'string' },
+      },
+    },
+  })
+  async refresh(
     @CurrentUser() { userId },
     @Body() { refreshToken },
   ): Promise<Tokens> {
-    return await this.authService.localRefresh(userId, refreshToken);
+    return await this.authService.refresh(userId, refreshToken);
   }
 }

@@ -39,7 +39,7 @@ export class FilesController {
       limits: { fileSize: 1024 * 1024 * 5 },
     }),
   )
-  upload(
+  async upload(
     @UploadedFile()
     file: Express.Multer.File,
     @CurrentUser() user,
@@ -58,7 +58,7 @@ export class FilesController {
   // }
 
   // @Delete(':id')
-  // remove(@Param('id', ParseIntPipe) id: number) {
-  //   return this.filesService.remove(id);
+  // delete(@Param('id', ParseIntPipe) id: number) {
+  //   return this.filesService.delete(id);
   // }
 }

@@ -20,15 +20,11 @@ export class FilesService {
     return await this.db.file.findMany({});
   }
 
-  findOne(id: number) {
+  async findOne(id: number) {
     return `This action returns a #${id} file`;
   }
 
-  update(id: number) {
-    return `This action updates a #${id} file`;
-  }
-
-  remove(id: number) {
+  async delete(id: number) {
     return `This action removes a #${id} file`;
   }
 }

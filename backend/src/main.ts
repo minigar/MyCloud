@@ -2,7 +2,6 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import path from 'path';
 import helmet from 'helmet';
 import * as express from 'express';
 import * as bodyParser from 'body-parser';
@@ -10,6 +9,7 @@ import * as cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
 import { BusinessErrorFilter } from './common/errors/businessErrors/businessError';
+import { join } from 'path';
 
 const APP_PORT = process.env.APP_PORT;
 const NEXT_APP_HOST = process.env.NEXT_APP_HOST;
@@ -20,7 +20,7 @@ async function bootstrap() {
 
   app.enableCors({ credentials: true, origin: true });
 
-  app.use('/public', express.static(path.join('./uploads')));
+  app.use('/public', express.static(join('./uploads')));
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(cookieParser());

@@ -35,7 +35,10 @@ export class AuthService {
       });
     }
 
-    console.log(oAuthUser);
+    const tokens = await this.getTokens(user.id, user.email, user.name);
+    await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
+
+    console.log(tokens);
 
     res.redirect('/health');
   }
@@ -121,11 +124,15 @@ export class AuthService {
     return true;
   }
 
-  async localRefresh(userId: number, refreshToken: string): Promise<Tokens> {
+  async refresh(userId: number, refreshToken: string): Promise<Tokens> {
     const user = await this.db.user.findFirst({
       where: { id: userId },
     });
+
     if (!user) throw new BusinessError(UserErrorKey.USER_NOT_FOUND);
+
+    if (!user.hashedRT)
+      throw new BusinessError(AuthErrorKey.HASHED_RT_NON_EXISTENT);
 
     let decoded: UserDecoded;
     try {
@@ -150,9 +157,6 @@ export class AuthService {
 
     if (!isMatches) throw new BusinessError(AuthErrorKey.TOKENS_ARE_NOT_SAME);
 
-    if (!user.hashedRT)
-      throw new BusinessError(AuthErrorKey.HASHED_RT_NON_EXISTENT);
-
     await this.db.user.update({
       where: { email: user.email },
       data: {
@@ -164,8 +168,6 @@ export class AuthService {
     await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
     return tokens;
   }
-
-  async googleRefresh() {}
 
   async hashData(data: any) {
     return await bcrypt.hash(data, 10);

@@ -5,12 +5,10 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { Response } from 'express';
 import { CurrentUser } from 'src/common/decorators';
 import { OAuthUser, Tokens } from './types';
 import { AccessTokenGuard, GoogleGuard } from 'src/common/guards';
@@ -27,11 +25,8 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(
-    @CurrentUser() user: OAuthUser,
-    @Res() res: Response,
-  ) {
-    return await this.authService.googleSignInOrSignUp(user, res);
+  async googleAuthRedirect(@CurrentUser() user: OAuthUser) {
+    return await this.authService.googleSignInOrSignUp(user);
   }
 
   @Post('signup')

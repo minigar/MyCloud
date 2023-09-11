@@ -4,6 +4,8 @@ import {
   Post,
   UseInterceptors,
   UploadedFile,
+  Query,
+  Delete,
 } from '@nestjs/common';
 import { FilesService } from '../services/files.service';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
@@ -12,6 +14,9 @@ import { fileStorage } from 'files/storage';
 import { UseGuards } from '@nestjs/common';
 import { AccessTokenGuard } from 'src/common/guards';
 import { CurrentUser } from '../common/decorators/CurrentUser.decorator';
+import { UserDecoded } from 'src/models/User.dto';
+import { FileType } from 'src/common/enums/file.enum';
+import { ParseIntArrayPipe } from 'src/common/pipes/ParseIntArrayPipe.pipe';
 
 @Controller('files')
 @ApiTags('files')
@@ -42,23 +47,26 @@ export class FilesController {
   async upload(
     @UploadedFile()
     file: Express.Multer.File,
-    @CurrentUser() user,
+    @CurrentUser() user: UserDecoded,
   ) {
     return this.filesService.create(file, user.userId);
   }
 
   @Get()
-  async findAll() {
-    return await this.filesService.findAll();
+  @ApiBearerAuth()
+  @UseGuards(AccessTokenGuard)
+  async findByUserId(
+    @CurrentUser() { userId }: UserDecoded,
+    @Query('type') fileType: FileType,
+  ) {
+    return await this.filesService.findByUserId(userId, fileType);
   }
 
-  // @Get(':id')
-  // findOne(@Param('id', ParseIntPipe) id: number) {
-  //   return this.filesService.findOne(id);
-  // }
-
-  // @Delete(':id')
-  // delete(@Param('id', ParseIntPipe) id: number) {
-  //   return this.filesService.delete(id);
-  // }
+  @Delete(':id')
+  delete(
+    @CurrentUser() { userId }: UserDecoded,
+    @Query('ids', ParseIntArrayPipe) ids: number[],
+  ) {
+    return this.filesService.delete(userId, ids);
+  }
 }

@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Response } from 'express';
 import { DatabaseService } from 'src/data/database.service';
 import { OAuthUser, Tokens } from './types';
 
@@ -11,6 +10,7 @@ import { AuthErrorKey, UserErrorKey } from 'src/controllers/errorKeys';
 import { JwtService } from '@nestjs/jwt';
 import { v4 as uuid } from 'uuid';
 import * as bcrypt from 'bcrypt';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -19,15 +19,16 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
-  async googleSignInOrSignUp(oAuthUser: OAuthUser, res: Response) {
-    const user = await this.db.user.findFirst({
+  async googleSignInOrSignUp(oAuthUser: OAuthUser) {
+    let user: User;
+    user = await this.db.user.findFirst({
       where: {
         email: oAuthUser.email,
       },
     });
 
     if (!user) {
-      await this.db.user.create({
+      user = await this.db.user.create({
         data: {
           email: oAuthUser.email,
           name: transliteration.transliterate(oAuthUser.firstName),
@@ -37,10 +38,8 @@ export class AuthService {
 
     const tokens = await this.getTokens(user.id, user.email, user.name);
     await this.updateRefreshTokenHash(user.id, tokens.refresh_token);
-
     console.log(tokens);
-
-    res.redirect('/health');
+    return tokens;
   }
 
   async localSignUp({ name, email, password }: UserBodyModel): Promise<Tokens> {
